@@ -49,6 +49,12 @@ class Scanner:
                 self.add_token(TokenType.LESS_EQUAL if self.match('=') else TokenType.LESS)
             case '>':
                 self.add_token(TokenType.GREATER_EQUAL if self.match('=') else TokenType.GREATER)
+            case '/':
+                if self.match('/'):
+                    while self.peek() != '\n' and not self.is_at_end():
+                        self.advance()
+                else:
+                    self.add_token(TokenType.SLASH)
             case _:
                 error.error(self.line, "Unexpected character.")
 
@@ -58,6 +64,10 @@ class Scanner:
 
         self.current += 1
         return True
+
+    def peek(self):
+        if self.is_at_end(): return '\0'
+        return self.src[self.current]
 
     def is_at_end(self):
         return self.current >= len(self.src)
