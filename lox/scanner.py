@@ -55,8 +55,31 @@ class Scanner:
                         self.advance()
                 else:
                     self.add_token(TokenType.SLASH)
+            case ' ' | '\r' | '\t':
+                pass
+            case '\n':
+                self.line += 1
+            case '"':
+                self.string()
             case _:
                 error.error(self.line, "Unexpected character.")
+
+    def string(self):
+        while self.peek() != '"' and not self.is_at_end():
+            if self.peek() == '\n':
+                self.line += 1
+            self.advance()
+
+        if self.is_at_end():
+            error.error(self.line, "Unterminated string.")
+            return
+
+        # The closing ".
+        self.advance()
+
+        # Trim the surrounding quotes.
+        value = self.src[self.start+1:self.current-1]
+        self.add_token(TokenType.STRING, value)
 
     def match(self, expected: str):
         if self.is_at_end(): return False
