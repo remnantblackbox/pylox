@@ -2,6 +2,25 @@ from token_type import TokenType
 from token_ import Token
 import error
 
+KEYWORDS = {
+    "and": TokenType.AND,
+    "class": TokenType.CLASS,
+    "else": TokenType.ELSE,
+    "false": TokenType.FALSE,
+    "for": TokenType.FOR,
+    "fun": TokenType.FUN,
+    "if": TokenType.IF,
+    "nil": TokenType.NIL,
+    "or": TokenType.OR,
+    "print": TokenType.PRINT,
+    "return": TokenType.RETURN,
+    "super": TokenType.SUPER,
+    "this": TokenType.THIS,
+    "true": TokenType.TRUE,
+    "var": TokenType.VAR,
+    "while": TokenType.WHILE
+}
+
 class Scanner:
     def __init__(self, src: str):
         self.src = src
@@ -64,8 +83,17 @@ class Scanner:
             case _:
                 if self.is_digit(c):
                     self.number()
+                elif self.is_alpha(c):
+                    self.identifier()
                 else:
                     error.error(self.line, "Unexpected character.")
+
+    def identifier(self):
+        while self.is_alpha_numeric(self.peek()):
+            self.advance()
+        text = self.src[self.start:self.current]
+        type = KEYWORDS.get(text, TokenType.IDENTIFIER)
+        self.add_token(type)
 
     def number(self):
         while self.is_digit(self.peek()):
@@ -115,6 +143,12 @@ class Scanner:
         if self.current + 1 >= len(self.src): 
             return '\0'
         return self.src[self.current+1]
+
+    def is_alpha(self, c):
+        return 'a' <= c <= 'z' or 'A' <= c <= 'Z' or c == '_'
+
+    def is_alpha_numeric(self, c):
+        return self.is_alpha(c) or self.is_digit(c)
 
     def is_digit(self, c):
         return '0' <= c <= '9'
