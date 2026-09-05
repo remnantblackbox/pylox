@@ -62,7 +62,23 @@ class Scanner:
             case '"':
                 self.string()
             case _:
-                error.error(self.line, "Unexpected character.")
+                if self.is_digit(c):
+                    self.number()
+                else:
+                    error.error(self.line, "Unexpected character.")
+
+    def number(self):
+        while self.is_digit(self.peek()):
+            self.advance()
+
+        # Look for a fractional part
+        if self.peek() == '.' and self.is_digit(self.peek_next()):
+            # Consume the "."
+            self.advance()
+            while self.is_digit(self.peek()):
+                self.advance()
+
+        self.add_token(TokenType.NUMBER, float(self.src[self.start:self.current]))
 
     def string(self):
         while self.peek() != '"' and not self.is_at_end():
@@ -82,15 +98,26 @@ class Scanner:
         self.add_token(TokenType.STRING, value)
 
     def match(self, expected: str):
-        if self.is_at_end(): return False
-        if self.src[self.current] != expected: return False
+        if self.is_at_end(): 
+            return False
+        if self.src[self.current] != expected: 
+            return False
 
         self.current += 1
         return True
 
     def peek(self):
-        if self.is_at_end(): return '\0'
+        if self.is_at_end(): 
+            return '\0'
         return self.src[self.current]
+
+    def peek_next(self):
+        if self.current + 1 >= len(self.src): 
+            return '\0'
+        return self.src[self.current+1]
+
+    def is_digit(self, c):
+        return '0' <= c <= '9'
 
     def is_at_end(self):
         return self.current >= len(self.src)
