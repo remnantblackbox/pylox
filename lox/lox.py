@@ -1,7 +1,6 @@
 import sys
 from scanner import Scanner
-
-had_error = False
+import error
 
 def main():
     args = sys.argv[1:]
@@ -17,18 +16,17 @@ def run_file(path: str):
     with open(path, 'r', encoding='utf-8') as f:
         src = f.read()
     run(src)
-    if had_error:
+    if error.had_error:
         sys.exit(65)
 
 def run_prompt():
-    global had_error
     while True:
         try:
             line = input("> ")
         except EOFError:
             break
         run(line)
-        had_error = False
+        error.had_error = False
 
 def run(src: str):
     scanner = Scanner(src) # still to be defined
@@ -36,14 +34,6 @@ def run(src: str):
 
     for token in tokens:
         print(token)
-
-def error(line: int, message: str):
-    report(line, "", message)
-
-def report(line: int, where: str, message: str):
-    global had_error
-    print(f"[line {line}] Error{where}: {message}", file=sys.stderr)
-    had_error = True
 
 
 

@@ -1,5 +1,6 @@
 from token_type import TokenType
 from token_ import Token
+import error
 
 class Scanner:
     def __init__(self, src: str):
@@ -49,8 +50,7 @@ class Scanner:
             case '>':
                 self.add_token(TokenType.GREATER_EQUAL if self.match('=') else TokenType.GREATER)
             case _:
-                from lox import error
-                error(self.line, "Unexpected character.")
+                error.error(self.line, "Unexpected character.")
 
     def match(self, expected: str):
         if self.is_at_end(): return False
