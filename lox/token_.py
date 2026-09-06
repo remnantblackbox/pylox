@@ -1,11 +1,13 @@
+from dataclasses import dataclass
+from typing import Any
 from token_type import TokenType
 
+@dataclass
 class Token:
-    def __init__(self, type: TokenType, lexeme: str, literal, line: int):
-        self.type = type
-        self.lexeme = lexeme
-        self.literal = literal
-        self.line = line
-
+    type: TokenType
+    lexeme: str
+    literal: Any
+    line: int
+    
     def __str__(self):
         return f"{self.type} {self.lexeme} {self.literal}"

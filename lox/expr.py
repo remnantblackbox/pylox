@@ -22,7 +22,7 @@ class ExprVisitor(ABC):
 
 class Expr(ABC):
     @abstractmethod
-    def accept(self, visitor: ExprVisitor):
+    def accept(self, visitor: ExprVisitor) -> Any:
         pass
 
 @dataclass
