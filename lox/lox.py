@@ -1,5 +1,7 @@
 import sys
 from scanner import Scanner
+from parser import Parser
+from ast_printer import AstPrinter
 import error
 
 def main():
@@ -31,11 +33,13 @@ def run_prompt():
 def run(src: str):
     scanner = Scanner(src) # still to be defined
     tokens = scanner.scan_tokens()
+    parser = Parser(tokens)
+    expression = parser.parse()
 
-    for token in tokens:
-        print(token)
+    if error.had_error:
+        return
 
-
+    print(AstPrinter().print(expression))
 
 if __name__ == "__main__":
     main()
