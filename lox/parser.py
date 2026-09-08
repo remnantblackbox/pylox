@@ -1,6 +1,10 @@
 from token_ import Token
 from token_type import TokenType
 from expr import Binary, Unary, Literal, Grouping
+import error
+
+class ParseError(Exception):
+    pass
 
 class Parser:
     def __init__(self, tokens: list[Token]):
@@ -81,6 +85,12 @@ class Parser:
                 return True
         return False
 
+    def consume(self, type: TokenType, message: str):
+        if self.check(type):
+            return self.advance()
+
+        raise self.error(self.peek(), message)
+
     def check(self, token_type: TokenType):
         if self.is_at_end():
             return False
@@ -99,3 +109,22 @@ class Parser:
 
     def previous(self):
         return self.tokens[self.current - 1]
+
+    def error(self, token: Token, message):
+        error.parse_error(token, message)
+        return ParseError()
+
+    def synchronize(self):
+        self.advance()
+
+        while not self.is_at_end():
+            if self.previous().type == TokenType.SEMICOLON:
+                return
+
+            match self.peek().type:
+                case (TokenType.CLASS | TokenType.FUN | TokenType.VAR | 
+                      TokenType.FOR | TokenType.IF | TokenType.WHILE | 
+                      TokenType.PRINT | TokenType.RETURN):
+                    return
+
+            self.advance()
