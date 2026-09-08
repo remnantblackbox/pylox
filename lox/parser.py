@@ -94,7 +94,7 @@ class Parser:
     def check(self, token_type: TokenType):
         if self.is_at_end():
             return False
-        return type(self.peek()) == token_type
+        return self.peek().type == token_type
 
     def advance(self):
         if not self.is_at_end():
@@ -102,7 +102,7 @@ class Parser:
         return self.previous()
 
     def is_at_end(self):
-        return type(self.peek()) == TokenType.EOF
+        return self.peek().type == TokenType.EOF
 
     def peek(self):
         return self.tokens[self.current]
