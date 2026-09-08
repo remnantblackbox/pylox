@@ -1,23 +1,37 @@
-from expr import ExprVisitor, Expr, Binary, Grouping, Literal, Unary
+from expr import Expr, Binary, Grouping, Literal, Unary
+from token_ import Token
+from token_type import TokenType
 
-class AstPrinter(ExprVisitor):
+class AstPrinter:
     def print(self, expr: Expr):
-        return expr.accept(self)
-
-    def visit_binary(self, expr: Binary):
-        return self.parenthesize(expr.operator.lexeme, expr.left, expr.right)
-
-    def visit_grouping(self, expr: Grouping):
-        return self.parenthesize("group", expr.expression)
-
-    def visit_literal(self, expr: Literal):
-        if expr.value == None:
-            return "nil"
-        return str(expr.value)
-
-    def visit_unary(self, expr: Unary):
-        return self.parenthesize(expr.operator.lexeme, expr.right)
-
+        match expr:
+            case Binary(left, operator, right):
+                return self.parenthesize(operator.lexeme, left, right)
+            case Grouping(expression):
+                return self.parenthesize("group", expression)
+            case Literal(value):
+                if value is None:
+                    return "nil"
+                return str(value)
+            case Unary(operator, right):
+                return self.parenthesize(operator.lexeme, right)
+            case _:
+                raise NotImplementedError(f"Unhandled expression: {type(expr).__name__}")
+        
     def parenthesize(self, name: str, *exprs: Expr):
-        output = [expr.accept(self) for expr in exprs]
+        output = [self.print(expr) for expr in exprs]
         return f"({name} {' '.join(output)})"
+
+if __name__ == "__main__":
+    expression = Binary(
+        Unary(
+            Token(TokenType.MINUS, "-", None, 1),
+            Literal(123)
+        ),
+        Token(TokenType.STAR, "*", None, 1),
+        Grouping(
+            Literal(45.67)
+        )
+    )
+
+    print(AstPrinter().print(expression))
