@@ -1,6 +1,4 @@
 from expr import Expr, Binary, Grouping, Literal, Unary
-from token_ import Token
-from token_type import TokenType
 
 class AstPrinter:
     def print(self, expr: Expr):
