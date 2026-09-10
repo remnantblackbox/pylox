@@ -31,7 +31,7 @@ def run_prompt():
         error.had_error = False
 
 def run(src: str):
-    scanner = Scanner(src) # still to be defined
+    scanner = Scanner(src)
     tokens = scanner.scan_tokens()
     parser = Parser(tokens)
     expression = parser.parse()
