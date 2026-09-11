@@ -37,12 +37,12 @@ def run(src: str):
     scanner = Scanner(src)
     tokens = scanner.scan_tokens()
     parser = Parser(tokens)
-    expression = parser.parse()
+    statements = parser.parse()
 
     if error.had_error:
         return
 
-    Interpreter().interpret(expression)
+    Interpreter().interpret(statements)
 
 if __name__ == "__main__":
     main()

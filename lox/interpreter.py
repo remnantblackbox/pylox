@@ -1,13 +1,14 @@
 from expr import Expr, Literal, Grouping, Unary, Binary
+from stmt import Stmt, Expression, Print
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
 import error
 
 class Interpreter:
-    def interpret(self, expression):
+    def interpret(self, statements: list[Stmt]):
         try:
-            value = self.evaluate(expression)
-            print(self.stringify(value))
+            for stmt in statements:
+                self.execute(stmt)
         except LoxRuntimeError as e:
             error.runtime_error(e)    
 
@@ -62,6 +63,14 @@ class Interpreter:
                     case TokenType.EQUAL_EQUAL:
                         return left == right
                 return None
+
+    def execute(self, stmt: Stmt):
+        match stmt:
+            case Expression(expression):
+                self.evaluate(expression)
+            case Print(expression):
+                value = self.evaluate(expression)
+                print(self.stringify(value))
 
     def is_truthy(self, obj):
         if obj is None:
