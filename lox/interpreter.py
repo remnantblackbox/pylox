@@ -1,8 +1,16 @@
 from expr import Expr, Literal, Grouping, Unary, Binary
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
+import error
 
 class Interpreter:
+    def interpret(self, expression):
+        try:
+            value = self.evaluate(expression)
+            print(self.stringify(value))
+        except LoxRuntimeError as e:
+            error.runtime_error(e)    
+
     def evaluate(self, expr: Expr):
         match expr:
             case Literal(value):
@@ -61,6 +69,21 @@ class Interpreter:
         if isinstance(obj, bool):
             return obj
         return True
+
+    def stringify(self, value):
+        if value is None:
+            return "nil"
+        
+        if isinstance(value, float):
+            text = str(value)
+            if text.endswith(".0"):
+                text = text[:-2]
+            return text
+
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        
+        return str(value)
 
     def check_number_operand(self, operator, operand):
         if isinstance(operand, float):
