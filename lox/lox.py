@@ -1,6 +1,7 @@
 import sys
 from scanner import Scanner
 from parser import Parser
+from interpreter import Interpreter
 from ast_printer import AstPrinter
 import error
 
@@ -41,7 +42,7 @@ def run(src: str):
     if error.had_error:
         return
 
-    print(AstPrinter().print(expression))
+    Interpreter().interpret(expression)
 
 if __name__ == "__main__":
     main()
