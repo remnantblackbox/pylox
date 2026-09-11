@@ -20,6 +20,8 @@ def run_file(path: str):
     run(src)
     if error.had_error:
         sys.exit(65)
+    if error.had_runtime_error:
+        sys.exit(70)
 
 def run_prompt():
     while True:
