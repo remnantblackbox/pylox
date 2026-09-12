@@ -1,7 +1,7 @@
 from token_ import Token
 from token_type import TokenType
-from expr import Binary, Unary, Literal, Grouping
-from stmt import Print, Expression
+from expr import Binary, Unary, Literal, Grouping, Variable
+from stmt import Print, Expression, Var
 import error
 
 class ParseError(Exception):
@@ -15,11 +15,19 @@ class Parser:
     def parse(self):
         statements = []
         while not self.is_at_end():
-            statements.append(self.statement())
+            statements.append(self.declaration())
         return statements
 
     def expression(self):
         return self.equality()
+
+    def declaration(self):
+        try:
+            if self.match(TokenType.VAR):
+                return self.var_declaration()
+            return self.statement()
+        except ParseError as e:
+            self.synchronize()
 
     def statement(self):
         if self.match(TokenType.PRINT):
@@ -30,6 +38,14 @@ class Parser:
         value = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return Print(value)
+
+    def var_declaration(self):
+        name = self.consume(TokenType.IDENTIFIER, "Expect variable name.")
+        initializer = None
+        if self.match(TokenType.EQUAL):
+            initializer = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
+        return Var(name, initializer)
 
     def expression_statement(self):
         expr = self.expression()
@@ -91,6 +107,9 @@ class Parser:
             return Literal(True)
         if self.match(TokenType.NIL):
             return Literal(None)
+
+        if self.match(TokenType.IDENTIFIER):
+            return Variable(self.previous())
         
         if self.match(TokenType.NUMBER, TokenType.STRING):
             return Literal(self.previous().literal)
