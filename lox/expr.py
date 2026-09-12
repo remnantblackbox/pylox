@@ -23,3 +23,7 @@ class Literal(Expr):
 class Unary(Expr):
     operator: Token
     right: Expr
+
+@dataclass
+class Variable(Expr):
+    name: Token
