@@ -1,10 +1,14 @@
-from expr import Expr, Literal, Grouping, Unary, Binary
-from stmt import Stmt, Expression, Print
+from expr import Expr, Literal, Grouping, Unary, Binary, Variable
+from stmt import Stmt, Expression, Print, Var
+from environment import Environment
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
 import error
 
 class Interpreter:
+    def __init__(self):
+        self.environment = Environment()
+
     def interpret(self, statements: list[Stmt]):
         try:
             for stmt in statements:
@@ -27,6 +31,8 @@ class Interpreter:
                         self.check_number_operand(operator, right)
                         return -right
                 return None
+            case Variable(name):
+                return self.environment.get(name)
             case Binary(left, operator, right):
                 left = self.evaluate(left)
                 right = self.evaluate(right)
@@ -71,6 +77,11 @@ class Interpreter:
             case Print(expression):
                 value = self.evaluate(expression)
                 print(self.stringify(value))
+            case Var(name, initializer):
+                value = None
+                if initializer is not None:
+                    value = self.evaluate(initializer)
+                self.environment.define(name.lexeme, value)
 
     def is_truthy(self, obj):
         if obj is None:
