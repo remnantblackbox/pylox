@@ -1,4 +1,4 @@
-from expr import Expr, Literal, Grouping, Unary, Binary, Variable
+from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign
 from stmt import Stmt, Expression, Print, Var
 from environment import Environment
 from token_type import TokenType
@@ -33,6 +33,10 @@ class Interpreter:
                 return None
             case Variable(name):
                 return self.environment.get(name)
+            case Assign(name, value):
+                value = self.evaluate(value)
+                self.environment.assign(name, value)
+                return value
             case Binary(left, operator, right):
                 left = self.evaluate(left)
                 right = self.evaluate(right)
