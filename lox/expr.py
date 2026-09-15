@@ -9,6 +9,7 @@ class Expr():
 class Assign(Expr):
     name: Token
     value: Expr
+
 @dataclass
 class Binary(Expr):
     left: Expr

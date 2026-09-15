@@ -6,6 +6,10 @@ class Stmt:
     pass
 
 @dataclass
+class Block(Stmt):
+    statements: list[Stmt]
+
+@dataclass
 class Expression(Stmt):
     expression: Expr
 
