@@ -1,5 +1,5 @@
 from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign
-from stmt import Stmt, Expression, Print, Var
+from stmt import Stmt, Expression, Print, Var, Block
 from environment import Environment
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
@@ -7,23 +7,24 @@ import error
 
 class Interpreter:
     def __init__(self):
+        # global environment
         self.environment = Environment()
 
     def interpret(self, statements: list[Stmt]):
         try:
             for stmt in statements:
-                self.execute(stmt)
+                self.execute(stmt, self.environment)
         except LoxRuntimeError as e:
             error.runtime_error(e)    
 
-    def evaluate(self, expr: Expr):
+    def evaluate(self, expr, environment):
         match expr:
             case Literal(value):
                 return value
             case Grouping(expression):
-                return self.evaluate(expression)
+                return self.evaluate(expression, environment)
             case Unary(operator, right):
-                right = self.evaluate(right)
+                right = self.evaluate(right, environment)
                 match operator.type:
                     case TokenType.BANG:
                         return not self.is_truthy(right)
@@ -32,14 +33,14 @@ class Interpreter:
                         return -right
                 return None
             case Variable(name):
-                return self.environment.get(name)
+                return environment.get(name)
             case Assign(name, value):
-                value = self.evaluate(value)
-                self.environment.assign(name, value)
+                value = self.evaluate(value, environment)
+                environment.assign(name, value)
                 return value
             case Binary(left, operator, right):
-                left = self.evaluate(left)
-                right = self.evaluate(right)
+                left = self.evaluate(left, environment)
+                right = self.evaluate(right, environment)
                 match operator.type:
                     case TokenType.GREATER:
                         self.check_number_operands(operator, left, right)
@@ -74,18 +75,22 @@ class Interpreter:
                         return left == right
                 return None
 
-    def execute(self, stmt: Stmt):
+    def execute(self, stmt, environment):
         match stmt:
             case Expression(expression):
-                self.evaluate(expression)
+                self.evaluate(expression, environment)
             case Print(expression):
-                value = self.evaluate(expression)
+                value = self.evaluate(expression, environment)
                 print(self.stringify(value))
             case Var(name, initializer):
                 value = None
                 if initializer is not None:
-                    value = self.evaluate(initializer)
-                self.environment.define(name.lexeme, value)
+                    value = self.evaluate(initializer, environment)
+                environment.define(name.lexeme, value)
+            case Block(statements):
+                block_env = Environment(environment)
+                for statement in statements:
+                    self.execute(statement, block_env)
 
     def is_truthy(self, obj):
         if obj is None:
