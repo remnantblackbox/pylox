@@ -1,7 +1,7 @@
 from token_ import Token
 from token_type import TokenType
 from expr import Binary, Unary, Literal, Grouping, Variable, Assign
-from stmt import Print, Expression, Var
+from stmt import Print, Expression, Var, Block
 import error
 
 class ParseError(Exception):
@@ -32,6 +32,10 @@ class Parser:
     def statement(self):
         if self.match(TokenType.PRINT):
             return self.print_statement()
+
+        if self.match(TokenType.LEFT_BRACE):
+            return Block(self.block())
+        
         return self.expression_statement()
 
     def print_statement(self):
@@ -51,6 +55,13 @@ class Parser:
         expr = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
         return Expression(expr)
+
+    def block(self):
+        statements = []
+        while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
+            statements.append(self.declaration())
+        self.consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
+        return statements
 
     def assignment(self):
         expr = self.equality()
