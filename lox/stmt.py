@@ -21,3 +21,9 @@ class Print(Stmt):
 class Var(Stmt):
     name: Token
     initializer: Expr
+
+@dataclass
+class If(Stmt):
+    condition: Expr
+    then_branch: Stmt
+    else_branch: Stmt = None
