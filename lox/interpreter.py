@@ -1,5 +1,5 @@
 from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign, Logical
-from stmt import Stmt, Expression, Print, Var, Block, If
+from stmt import Stmt, Expression, Print, Var, Block, If, While
 from environment import Environment
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
@@ -101,6 +101,9 @@ class Interpreter:
                 if initializer is not None:
                     value = self.evaluate(initializer, environment)
                 environment.define(name.lexeme, value)
+            case While(condition, body):
+                while self.is_truthy(self.evaluate(condition, environment)):
+                    self.execute(body, environment)
             case Block(statements):
                 block_env = Environment(environment)
                 for statement in statements:
