@@ -1,7 +1,7 @@
 from token_ import Token
 from token_type import TokenType
 from expr import Binary, Unary, Literal, Grouping, Variable, Assign
-from stmt import Print, Expression, Var, Block
+from stmt import Print, Expression, Var, Block, If
 import error
 
 class ParseError(Exception):
@@ -30,6 +30,9 @@ class Parser:
             self.synchronize()
 
     def statement(self):
+        if self.match(TokenType.IF):
+            return self.if_statement()
+
         if self.match(TokenType.PRINT):
             return self.print_statement()
 
@@ -37,6 +40,17 @@ class Parser:
             return Block(self.block())
         
         return self.expression_statement()
+
+    def if_statement(self):
+        self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
+        condition = self.expression()
+        self.consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
+
+        then_branch = self.statement()
+        else_branch = None
+        if self.match(TokenType.ELSE):
+            else_branch = self.statement()
+        return If(condition, then_branch, else_branch)
 
     def print_statement(self):
         value = self.expression()
