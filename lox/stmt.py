@@ -23,6 +23,11 @@ class Var(Stmt):
     initializer: Expr
 
 @dataclass
+class While(Stmt):
+    condition: Expr
+    body: Stmt
+
+@dataclass
 class If(Stmt):
     condition: Expr
     then_branch: Stmt
