@@ -1,5 +1,5 @@
 from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign
-from stmt import Stmt, Expression, Print, Var, Block
+from stmt import Stmt, Expression, Print, Var, Block, If
 from environment import Environment
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
@@ -79,6 +79,11 @@ class Interpreter:
         match stmt:
             case Expression(expression):
                 self.evaluate(expression, environment)
+            case If(condition, then_branch, else_branch):
+                if self.is_truthy(self.evaluate(condition)):
+                    self.execute(then_branch, environment)
+                elif else_branch is not None:
+                    self.execute(else_branch, environment)
             case Print(expression):
                 value = self.evaluate(expression, environment)
                 print(self.stringify(value))
