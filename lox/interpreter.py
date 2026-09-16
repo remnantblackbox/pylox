@@ -80,7 +80,7 @@ class Interpreter:
             case Expression(expression):
                 self.evaluate(expression, environment)
             case If(condition, then_branch, else_branch):
-                if self.is_truthy(self.evaluate(condition)):
+                if self.is_truthy(self.evaluate(condition, environment)):
                     self.execute(then_branch, environment)
                 elif else_branch is not None:
                     self.execute(else_branch, environment)
