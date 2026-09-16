@@ -1,7 +1,7 @@
 from token_ import Token
 from token_type import TokenType
 from expr import Binary, Unary, Literal, Grouping, Variable, Assign, Logical
-from stmt import Print, Expression, Var, Block, If
+from stmt import Print, Expression, Var, Block, If, While
 import error
 
 class ParseError(Exception):
@@ -36,6 +36,9 @@ class Parser:
         if self.match(TokenType.PRINT):
             return self.print_statement()
 
+        if self.match(TokenType.WHILE):
+            return self.while_statement()
+
         if self.match(TokenType.LEFT_BRACE):
             return Block(self.block())
         
@@ -64,6 +67,13 @@ class Parser:
             initializer = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
         return Var(name, initializer)
+
+    def while_statement(self):
+        self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
+        condition = self.expression()
+        self.consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
+        body = self.statement()
+        return While(condition, body)
 
     def expression_statement(self):
         expr = self.expression()
