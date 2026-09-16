@@ -1,6 +1,6 @@
 from token_ import Token
 from token_type import TokenType
-from expr import Binary, Unary, Literal, Grouping, Variable, Assign
+from expr import Binary, Unary, Literal, Grouping, Variable, Assign, Logical
 from stmt import Print, Expression, Var, Block, If
 import error
 
@@ -78,7 +78,7 @@ class Parser:
         return statements
 
     def assignment(self):
-        expr = self.equality()
+        expr = self.logic_or()
         if self.match(TokenType.EQUAL):
             equals = self.previous()
             value = self.assignment()
@@ -87,6 +87,26 @@ class Parser:
                 return Assign(expr.name, value)
             
             self.error(equals, "Invalid assignment target.")
+        return expr
+
+    def logic_or(self):
+        expr = self.logic_and()
+
+        while self.match(TokenType.OR):
+            operator = self.previous()
+            right = self.logic_and()
+            expr = Logical(expr, operator, right)
+
+        return expr
+
+    def logic_and(self):
+        expr = self.equality()
+
+        while self.match(TokenType.AND):
+            operator = self.previous()
+            right = self.equality()
+            expr = Logical(expr, operator, right)
+
         return expr
 
     def equality(self):
