@@ -26,4 +26,4 @@ class Var(Stmt):
 class If(Stmt):
     condition: Expr
     then_branch: Stmt
-    else_branch: Stmt = None
+    else_branch: Stmt
