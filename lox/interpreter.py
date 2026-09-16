@@ -1,4 +1,4 @@
-from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign
+from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign, Logical
 from stmt import Stmt, Expression, Print, Var, Block, If
 from environment import Environment
 from token_type import TokenType
@@ -21,6 +21,15 @@ class Interpreter:
         match expr:
             case Literal(value):
                 return value
+            case Logical(left, operator, right):
+                left = self.evaluate(left, environment)
+                if operator.type == TokenType.OR:
+                    if self.is_truthy(left):
+                        return left
+                else:
+                    if not self.is_truthy(left):
+                        return left
+                return self.evaluate(right, environment)
             case Grouping(expression):
                 return self.evaluate(expression, environment)
             case Unary(operator, right):
