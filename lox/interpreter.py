@@ -1,4 +1,4 @@
-from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign, Logical
+from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign, Logical, Call
 from stmt import Stmt, Expression, Print, Var, Block, If, While
 from environment import Environment
 from token_type import TokenType
@@ -83,6 +83,12 @@ class Interpreter:
                     case TokenType.EQUAL_EQUAL:
                         return left == right
                 return None
+            case Call(callee, paren, arguments):
+                callee = self.evaluate(callee)
+                arguments = [self.evaluate(arg) for arg in arguments]
+                if not hasattr(callee, "call"):
+                    raise LoxRuntimeError(paren, "Can only call functions and classes.")
+                callee.call(self, arguments)
 
     def execute(self, stmt, environment):
         match stmt:
