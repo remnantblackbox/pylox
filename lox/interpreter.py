@@ -85,8 +85,8 @@ class Interpreter:
                         return left == right
                 return None
             case Call(callee, paren, arguments):
-                callee = self.evaluate(callee)
-                arguments = [self.evaluate(arg) for arg in arguments]
+                callee = self.evaluate(callee, environment)
+                arguments = [self.evaluate(arg, environment) for arg in arguments]
                 if not isinstance(callee, LoxCallable):
                     raise LoxRuntimeError(paren, "Can only call functions and classes.")
                 if len(arguments) != callee.arity():
