@@ -88,7 +88,9 @@ class Interpreter:
                 arguments = [self.evaluate(arg) for arg in arguments]
                 if not hasattr(callee, "call"):
                     raise LoxRuntimeError(paren, "Can only call functions and classes.")
-                callee.call(self, arguments)
+                if len(arguments) != callee.arity():
+                    raise LoxRuntimeError(paren, f"Expected {callee.arity()} arguments but got {len(arguments)}.")
+                return callee.call(self, arguments)
 
     def execute(self, stmt, environment):
         match stmt:
