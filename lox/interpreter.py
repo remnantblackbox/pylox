@@ -1,20 +1,20 @@
 from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign, Logical, Call
 from stmt import Stmt, Expression, Print, Var, Block, If, While
 from environment import Environment
-from lox_callable import LoxCallable
+from lox_callable import LoxCallable, Clock
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
 import error
 
 class Interpreter:
     def __init__(self):
-        # global environment
-        self.environment = Environment()
+        self.globals = Environment()
+        self.globals.define("clock", Clock())
 
     def interpret(self, statements: list[Stmt]):
         try:
             for stmt in statements:
-                self.execute(stmt, self.environment)
+                self.execute(stmt, self.globals)
         except LoxRuntimeError as e:
             error.runtime_error(e)    
 
