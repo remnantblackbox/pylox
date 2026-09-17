@@ -1,6 +1,7 @@
 from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign, Logical, Call
 from stmt import Stmt, Expression, Print, Var, Block, If, While
 from environment import Environment
+from lox_callable import LoxCallable
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
 import error
@@ -86,7 +87,7 @@ class Interpreter:
             case Call(callee, paren, arguments):
                 callee = self.evaluate(callee)
                 arguments = [self.evaluate(arg) for arg in arguments]
-                if not hasattr(callee, "call"):
+                if not isinstance(callee, LoxCallable):
                     raise LoxRuntimeError(paren, "Can only call functions and classes.")
                 if len(arguments) != callee.arity():
                     raise LoxRuntimeError(paren, f"Expected {callee.arity()} arguments but got {len(arguments)}.")
