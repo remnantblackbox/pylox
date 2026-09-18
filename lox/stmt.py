@@ -14,6 +14,12 @@ class Expression(Stmt):
     expression: Expr
 
 @dataclass
+class Function(Stmt):
+    name: Token
+    params: list[Token]
+    body: list[Stmt]
+
+@dataclass
 class Print(Stmt):
     expression: Expr
 
