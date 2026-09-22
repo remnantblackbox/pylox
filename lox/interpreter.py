@@ -1,7 +1,7 @@
 from expr import Literal, Grouping, Unary, Binary, Variable, Assign, Logical, Call
-from stmt import Stmt, Expression, Print, Var, Block, If, While
+from stmt import Stmt, Expression, Print, Var, Block, If, While, Function
 from environment import Environment
-from lox_callable import LoxCallable, Clock
+from lox_callable import LoxCallable, Clock, LoxFunction
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
 import error
@@ -97,6 +97,9 @@ class Interpreter:
         match stmt:
             case Expression(expression):
                 self.evaluate(expression, environment)
+            case Function(name):
+                function = LoxFunction(stmt)
+                environment.define(name.lexeme, function)
             case If(condition, then_branch, else_branch):
                 if self.is_truthy(self.evaluate(condition, environment)):
                     self.execute(then_branch, environment)
@@ -115,8 +118,11 @@ class Interpreter:
                     self.execute(body, environment)
             case Block(statements):
                 block_env = Environment(environment)
-                for statement in statements:
-                    self.execute(statement, block_env)
+                self.execute_block(statements, block_env)
+
+    def execute_block(self, statements, environment):
+        for statement in statements:
+            self.execute(statement, environment)
 
     def is_truthy(self, obj):
         if obj is None:

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from time import time
-from stmt import Function
+from stmt import Function, Block
 from environment import Environment
 
 class LoxCallable(ABC):
@@ -20,7 +20,7 @@ class LoxFunction(LoxCallable):
         environment = Environment(interpreter.globals)
         for i in range(len(self.declaration.params)):
             environment.define(self.declaration.params[i].lexeme, arguments[i])
-        interpreter.execute(self.declaration.body, environment)
+        interpreter.execute_block(self.declaration.body, environment)
 
     def arity(self):
         return len(self.declaration.params)
