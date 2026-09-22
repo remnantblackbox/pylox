@@ -1,9 +1,10 @@
 from expr import Literal, Grouping, Unary, Binary, Variable, Assign, Logical, Call
-from stmt import Stmt, Expression, Print, Var, Block, If, While, Function
+from stmt import Stmt, Expression, Print, Var, Block, If, While, Function, Return
 from environment import Environment
 from lox_callable import LoxCallable, Clock, LoxFunction
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
+from return_exc import ReturnException
 import error
 
 class Interpreter:
@@ -108,6 +109,11 @@ class Interpreter:
             case Print(expression):
                 value = self.evaluate(expression, environment)
                 print(self.stringify(value))
+            case Return(keyword, value):
+                ret_val = None
+                if value is not None:
+                    ret_val = self.evaluate(value, environment)
+                raise ReturnException(ret_val)
             case Var(name, initializer):
                 value = None
                 if initializer is not None:

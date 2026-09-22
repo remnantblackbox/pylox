@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from time import time
 from stmt import Function, Block
 from environment import Environment
+from return_exc import ReturnException
 
 class LoxCallable(ABC):
     @abstractmethod
@@ -20,7 +21,10 @@ class LoxFunction(LoxCallable):
         environment = Environment(interpreter.globals)
         for i in range(len(self.declaration.params)):
             environment.define(self.declaration.params[i].lexeme, arguments[i])
-        interpreter.execute_block(self.declaration.body, environment)
+        try:
+            interpreter.execute_block(self.declaration.body, environment)
+        except ReturnException as e:
+            return e.value
 
     def arity(self):
         return len(self.declaration.params)
