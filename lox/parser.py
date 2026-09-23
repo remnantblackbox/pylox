@@ -1,6 +1,6 @@
 from token_ import Token
 from token_type import TokenType
-from expr import Binary, Unary, Literal, Grouping, Variable, Assign, Logical, Call
+from expr import Binary, Unary, Literal, Grouping, Variable, Assign, Logical, Call, Lambda
 from stmt import Print, Expression, Var, Block, If, While, Function, Return
 import error
 
@@ -23,8 +23,12 @@ class Parser:
 
     def declaration(self):
         try:
-            if self.match(TokenType.FUN):
-                return self.function("function")
+            if self.check(TokenType.FUN):
+                if self.check_next(TokenType.IDENTIFIER):
+                    self.advance()
+                    return self.function("function")
+                if self.check_next(TokenType.LEFT_PAREN):
+                    return self.statement()
             if self.match(TokenType.VAR):
                 return self.var_declaration()
             return self.statement()
@@ -132,8 +136,11 @@ class Parser:
 
     def function(self, kind: str):
         name = self.consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
+        parameters, body = self.function_body(kind)
+        return Function(name, parameters, body)
 
-        self.consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
+    def function_body(self, kind):
+        self.consume(TokenType.LEFT_PAREN, "Expect '(' before parameters.")
         parameters = []
         if not self.check(TokenType.RIGHT_PAREN):
             parameters.append(self.consume(TokenType.IDENTIFIER, "Expect parameter name."))
@@ -145,7 +152,7 @@ class Parser:
 
         self.consume(TokenType.LEFT_BRACE, f"Expect '{{' before {kind} body.")
         body = self.block()
-        return Function(name, parameters, body)
+        return parameters, body
 
     def block(self):
         statements = []
@@ -267,6 +274,10 @@ class Parser:
 
         if self.match(TokenType.IDENTIFIER):
             return Variable(self.previous())
+
+        if self.match(TokenType.FUN):
+            parameters, body = self.function_body("function")
+            return Lambda(parameters, body)
         
         if self.match(TokenType.NUMBER, TokenType.STRING):
             return Literal(self.previous().literal)
