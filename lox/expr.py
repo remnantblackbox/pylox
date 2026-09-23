@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 from token_ import Token
+from stmt import Stmt
 
 class Expr():
     pass
@@ -25,6 +26,12 @@ class Call(Expr):
 @dataclass
 class Grouping(Expr):
     expression: Expr
+
+@dataclass
+class Lambda(Expr):
+    keyword: Token
+    params: list[Token]
+    body: list[Stmt]
 
 @dataclass
 class Literal(Expr):
