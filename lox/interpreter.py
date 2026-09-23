@@ -99,7 +99,7 @@ class Interpreter:
             case Expression(expression):
                 self.evaluate(expression, environment)
             case Function(name):
-                function = LoxFunction(stmt)
+                function = LoxFunction(stmt, environment)
                 environment.define(name.lexeme, function)
             case If(condition, then_branch, else_branch):
                 if self.is_truthy(self.evaluate(condition, environment)):
