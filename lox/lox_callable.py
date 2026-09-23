@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from time import time
-from stmt import Function, Block
+from stmt import Function
 from environment import Environment
 from return_exc import ReturnException
+import time
 
 class LoxCallable(ABC):
     @abstractmethod
