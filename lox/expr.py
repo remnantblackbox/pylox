@@ -29,7 +29,6 @@ class Grouping(Expr):
 
 @dataclass
 class Lambda(Expr):
-    keyword: Token
     params: list[Token]
     body: list[Stmt]
 
