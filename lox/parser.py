@@ -307,6 +307,11 @@ class Parser:
     def peek(self):
         return self.tokens[self.current]
 
+    def check_next(self, token_type):
+        if self.is_at_end():
+            return False
+        return self.tokens[self.current + 1].type == token_type
+
     def previous(self):
         return self.tokens[self.current - 1]
 
