@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from stmt import Function
+from expr import Lambda
 from environment import Environment
 from return_exc import ReturnException
 import time
@@ -14,7 +15,7 @@ class LoxCallable(ABC):
         pass
 
 class LoxFunction(LoxCallable):
-    def __init__(self, declaration: Function, closure: Environment):
+    def __init__(self, declaration: Function | Lambda, closure: Environment):
         self.declaration = declaration
         self.closure = closure
 

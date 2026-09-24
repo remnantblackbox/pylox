@@ -1,4 +1,4 @@
-from expr import Literal, Grouping, Unary, Binary, Variable, Assign, Logical, Call
+from expr import Literal, Grouping, Unary, Binary, Variable, Assign, Logical, Call, Lambda
 from stmt import Stmt, Expression, Print, Var, Block, If, While, Function, Return
 from environment import Environment
 from lox_callable import LoxCallable, Clock, LoxFunction
@@ -32,6 +32,8 @@ class Interpreter:
                     if not self.is_truthy(left):
                         return left
                 return self.evaluate(right, environment)
+            case Lambda():
+                return LoxFunction(expr, environment)
             case Grouping(expression):
                 return self.evaluate(expression, environment)
             case Unary(operator, right):
@@ -109,7 +111,7 @@ class Interpreter:
             case Print(expression):
                 value = self.evaluate(expression, environment)
                 print(self.stringify(value))
-            case Return(keyword, value):
+            case Return(value):
                 ret_val = None
                 if value is not None:
                     ret_val = self.evaluate(value, environment)
