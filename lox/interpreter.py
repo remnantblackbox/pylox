@@ -111,7 +111,7 @@ class Interpreter:
             case Print(expression):
                 value = self.evaluate(expression, environment)
                 print(self.stringify(value))
-            case Return(value):
+            case Return(keyword, value):
                 ret_val = None
                 if value is not None:
                     ret_val = self.evaluate(value, environment)
