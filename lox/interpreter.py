@@ -83,9 +83,9 @@ class Interpreter:
                         self.check_number_operands(operator, left, right)
                         return left * right
                     case TokenType.BANG_EQUAL:
-                        return left != right
+                        return type(left) is not type(right) or left != right
                     case TokenType.EQUAL_EQUAL:
-                        return left == right
+                        return type(left) is type(right) and left == right
                 return None
             case Call(callee, paren, arguments):
                 callee = self.evaluate(callee, environment)
