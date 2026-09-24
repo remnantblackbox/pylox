@@ -1,7 +1,7 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 from token_ import Token
-from stmt import Stmt
 
 class Expr():
     pass
