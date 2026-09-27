@@ -65,5 +65,5 @@ class Resolver:
                     error(name, "Can't read local variable in its own initializer.")
                 self.resolve_local(expr, name)
             case Assign(name, value):
-                self.resolve(value)
+                self.resolve_expr(value)
                 self.resolve_local(expr, name)
