@@ -1,4 +1,4 @@
-from stmt import Block, Var, Function
+from stmt import Block, Var, Function, Expression
 from expr import Variable, Assign
 from error import error
 
@@ -57,6 +57,8 @@ class Resolver:
                 self.declare(name)
                 self.define(name)
                 self.resolve_function(stmt)
+            case Expression(expression):
+                self.resolve_expr(expression)
 
     def resolve_expr(self, expr):
         match expr:
