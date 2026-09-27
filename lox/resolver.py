@@ -1,5 +1,5 @@
 from stmt import Block, Var, Function, Expression, If, Print, Return, While
-from expr import Variable, Assign, Binary, Call
+from expr import Variable, Assign, Binary, Call, Grouping
 from error import error
 
 class Resolver:
@@ -89,3 +89,5 @@ class Resolver:
                 self.resolve_expr(callee)
                 for argument in arguments:
                     self.resolve_expr(argument)
+            case Grouping(expression):
+                self.resolve_expr(expression)
