@@ -1,5 +1,5 @@
 from stmt import Block, Var, Function, Expression, If, Print, Return, While
-from expr import Variable, Assign, Binary, Call, Grouping, Lambda
+from expr import Variable, Assign, Binary, Call, Grouping, Lambda, Logical
 from error import error
 
 class Resolver:
@@ -93,3 +93,6 @@ class Resolver:
                 self.resolve_expr(expression)
             case Lambda():
                 self.resolve_function(expr)
+            case Logical(left, operator, right):
+                self.resolve_expr(left)
+                self.resolve_expr(right)
