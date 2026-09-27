@@ -1,4 +1,4 @@
-from stmt import Block, Var, Function, Expression, If
+from stmt import Block, Var, Function, Expression, If, Print
 from expr import Variable, Assign
 from error import error
 
@@ -64,6 +64,8 @@ class Resolver:
                 self.resolve_stmt(then_branch)
                 if else_branch is not None:
                     self.resolve_stmt(else_branch)
+            case Print(expression):
+                self.resolve_expr(expression)
 
     def resolve_expr(self, expr):
         match expr:
