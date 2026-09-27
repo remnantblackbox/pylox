@@ -1,5 +1,5 @@
 from stmt import Block, Var
-from expr import Variable
+from expr import Variable, Assign
 from error import error
 
 class Resolver:
@@ -51,4 +51,7 @@ class Resolver:
             case Variable(name):
                 if self.scopes and self.scopes[-1][name.lexeme] == False:
                     error(name, "Can't read local variable in its own initializer.")
+                self.resolve_local(expr, name)
+            case Assign(name, value):
+                self.resolve(value)
                 self.resolve_local(expr, name)
