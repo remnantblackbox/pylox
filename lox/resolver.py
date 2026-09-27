@@ -61,7 +61,7 @@ class Resolver:
     def resolve_expr(self, expr):
         match expr:
             case Variable(name):
-                if self.scopes and self.scopes[-1][name.lexeme] == False:
+                if self.scopes and self.scopes[-1].get(name.lexeme) is False:
                     error(name, "Can't read local variable in its own initializer.")
                 self.resolve_local(expr, name)
             case Assign(name, value):
