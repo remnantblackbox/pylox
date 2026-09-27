@@ -16,7 +16,7 @@ class Resolver:
         for param in function.params:
             self.declare(param)
             self.define(param)
-        self.resolve_stmt(function.body)
+        self.resolve(function.body)
         self.end_scope()
 
     def begin_scope(self):
