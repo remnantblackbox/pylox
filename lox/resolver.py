@@ -1,5 +1,5 @@
 from stmt import Block, Var, Function, Expression, If, Print, Return, While
-from expr import Variable, Assign
+from expr import Variable, Assign, Binary, Call
 from error import error
 
 class Resolver:
@@ -82,3 +82,6 @@ class Resolver:
             case Assign(name, value):
                 self.resolve_expr(value)
                 self.resolve_local(expr, name)
+            case Binary(left, operator, right):
+                self.resolve_expr(left)
+                self.resolve_expr(right)
