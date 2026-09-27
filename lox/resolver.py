@@ -1,4 +1,4 @@
-from stmt import Block, Var
+from stmt import Block, Var, Function
 from expr import Variable, Assign
 from error import error
 
@@ -10,6 +10,14 @@ class Resolver:
     def resolve(self, statements):
         for statement in statements:
             self.resolve_stmt(statement)
+
+    def resolve_function(self, function):
+        self.begin_scope()
+        for param in function.params:
+            self.declare(param)
+            self.define(param)
+        self.resolve_stmt(function.body)
+        self.end_scope()
 
     def begin_scope(self):
         self.scopes.append({})
@@ -45,6 +53,10 @@ class Resolver:
                 if initializer is not None:
                     self.resolve_expr(initializer)
                 self.define(name)
+            case Function(name):
+                self.declare(name)
+                self.define(name)
+                self.resolve_function(stmt)
 
     def resolve_expr(self, expr):
         match expr:
