@@ -1,5 +1,5 @@
 from stmt import Block, Var, Function, Expression, If, Print, Return, While
-from expr import Variable, Assign, Binary, Call, Grouping, Lambda, Logical
+from expr import Variable, Assign, Binary, Call, Grouping, Lambda, Logical, Unary
 from error import error
 
 class Resolver:
@@ -95,4 +95,6 @@ class Resolver:
                 self.resolve_function(expr)
             case Logical(left, operator, right):
                 self.resolve_expr(left)
+                self.resolve_expr(right)
+            case Unary(operator, right):
                 self.resolve_expr(right)
