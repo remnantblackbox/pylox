@@ -1,4 +1,6 @@
 from stmt import Block, Var
+from expr import Variable
+from error import error
 
 class Resolver:
     def __init__(self, interpreter):
@@ -26,6 +28,12 @@ class Resolver:
             return
         self.scopes[-1][name.lexeme] = True
 
+    def resolve_local(self, expr, name):
+        for distance, scope in enumerate(reversed(self.scopes)):
+            if name.lexeme in scope:
+                self.interpreter.resolve(expr, distance)
+                return
+
     def resolve_stmt(self, stmt):
         match stmt:
             case Block(statements):
@@ -39,4 +47,8 @@ class Resolver:
                 self.define(name)
 
     def resolve_expr(self, expr):
-        pass
+        match expr:
+            case Variable(name):
+                if self.scopes and self.scopes[-1][name.lexeme] == False:
+                    error(name, "Can't read local variable in its own initializer.")
+                self.resolve_local(expr, name)
