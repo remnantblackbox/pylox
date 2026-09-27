@@ -85,3 +85,7 @@ class Resolver:
             case Binary(left, operator, right):
                 self.resolve_expr(left)
                 self.resolve_expr(right)
+            case Call(callee, paren, arguments):
+                self.resolve_expr(callee)
+                for argument in arguments:
+                    self.resolve_expr(argument)
