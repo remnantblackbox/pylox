@@ -6,7 +6,7 @@ from token_ import Token
 class Expr():
     pass
 
-@dataclass
+@dataclass(eq=False)
 class Assign(Expr):
     name: Token
     value: Expr
@@ -47,6 +47,6 @@ class Unary(Expr):
     operator: Token
     right: Expr
 
-@dataclass
+@dataclass(eq=False)
 class Variable(Expr):
     name: Token

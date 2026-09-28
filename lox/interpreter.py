@@ -11,6 +11,7 @@ class Interpreter:
     def __init__(self):
         self.globals = Environment()
         self.globals.define("clock", Clock())
+        self.locals = {}
 
     def interpret(self, statements: list[Stmt]):
         try:
@@ -46,7 +47,7 @@ class Interpreter:
                         return -right
                 return None
             case Variable(name):
-                return environment.get(name)
+                self.look_up_variable(name, expr, environment)
             case Assign(name, value):
                 value = self.evaluate(value, environment)
                 environment.assign(name, value)
@@ -127,6 +128,16 @@ class Interpreter:
             case Block(statements):
                 block_env = Environment(environment)
                 self.execute_block(statements, block_env)
+
+    def resolve(self, expr, depth):
+        self.locals[expr] = depth
+
+    def look_up_variable(self, name, expr, environment):
+        distance = self.locals.get(expr)
+        if distance is not None:
+            return environment.get_at(distance, name.lexeme)
+        else:
+            return self.globals.get(name)
 
     def execute_block(self, statements, environment):
         for statement in statements:
