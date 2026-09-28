@@ -47,6 +47,10 @@ def run(src: str):
 
     resolver = Resolver(interpreter)
     resolver.resolve(statements)
+
+    if error.had_error:
+        return
+
     interpreter.interpret(statements)
 
 if __name__ == "__main__":

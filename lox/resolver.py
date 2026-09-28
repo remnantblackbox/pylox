@@ -1,23 +1,32 @@
 from stmt import Block, Var, Function, Expression, If, Print, Return, While
 from expr import Variable, Assign, Binary, Call, Grouping, Lambda, Logical, Unary
 from error import error
+from enum import Enum, auto
+
+class FunctionType(Enum):
+    NONE = auto()
+    FUNCTION = auto()
 
 class Resolver:
     def __init__(self, interpreter):
         self.interpreter = interpreter
         self.scopes: list[dict[str, bool]] = []
+        self.current_function = FunctionType.NONE
 
     def resolve(self, statements):
         for statement in statements:
             self.resolve_stmt(statement)
 
-    def resolve_function(self, function):
+    def resolve_function(self, function, function_type):
+        enclosing_function = self.current_function
+        self.current_function = function_type
         self.begin_scope()
         for param in function.params:
             self.declare(param)
             self.define(param)
         self.resolve(function.body)
         self.end_scope()
+        self.current_function = enclosing_function
 
     def begin_scope(self):
         self.scopes.append({})
@@ -29,6 +38,8 @@ class Resolver:
         if not self.scopes:
             return
         scope = self.scopes[-1]
+        if name.lexeme in scope:
+            error(name, "Already a variable with this name in this scope.")
         scope[name.lexeme] = False
 
     def define(self, name):
@@ -56,7 +67,7 @@ class Resolver:
             case Function(name):
                 self.declare(name)
                 self.define(name)
-                self.resolve_function(stmt)
+                self.resolve_function(stmt, FunctionType.FUNCTION)
             case Expression(expression):
                 self.resolve_expr(expression)
             case If(condition, then_branch, else_branch):
@@ -67,6 +78,8 @@ class Resolver:
             case Print(expression):
                 self.resolve_expr(expression)
             case Return(keyword, value):
+                if self.current_function is FunctionType.NONE:
+                    error(keyword, "Can't return from top-level code.")
                 if value is not None:
                     self.resolve_expr(value)
             case While(condition, body):
@@ -92,7 +105,7 @@ class Resolver:
             case Grouping(expression):
                 self.resolve_expr(expression)
             case Lambda():
-                self.resolve_function(expr)
+                self.resolve_function(expr, FunctionType.FUNCTION)
             case Logical(left, operator, right):
                 self.resolve_expr(left)
                 self.resolve_expr(right)

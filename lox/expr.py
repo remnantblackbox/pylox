@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 from token_ import Token
 
-class Expr():
+class Expr:
     pass
 
 @dataclass(eq=False)
