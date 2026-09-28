@@ -2,8 +2,11 @@ import sys
 from scanner import Scanner
 from parser import Parser
 from interpreter import Interpreter
+from resolver import Resolver
 from ast_printer import AstPrinter
 import error
+
+interpreter = Interpreter()
 
 def main():
     args = sys.argv[1:]
@@ -42,7 +45,9 @@ def run(src: str):
     if error.had_error:
         return
 
-    Interpreter().interpret(statements)
+    resolver = Resolver(interpreter)
+    resolver.resolve(statements)
+    interpreter.interpret(statements)
 
 if __name__ == "__main__":
     main()
