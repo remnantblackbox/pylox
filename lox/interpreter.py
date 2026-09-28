@@ -50,7 +50,11 @@ class Interpreter:
                 self.look_up_variable(name, expr, environment)
             case Assign(name, value):
                 value = self.evaluate(value, environment)
-                environment.assign(name, value)
+                distance = self.locals.get(expr)
+                if distance is not None:
+                    environment.assign_at(distance, name, value)
+                else:
+                    self.globals.assign(name, value)
                 return value
             case Binary(left, operator, right):
                 left = self.evaluate(left, environment)
