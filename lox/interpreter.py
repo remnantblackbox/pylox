@@ -47,7 +47,7 @@ class Interpreter:
                         return -right
                 return None
             case Variable(name):
-                self.look_up_variable(name, expr, environment)
+                return self.look_up_variable(name, expr, environment)
             case Assign(name, value):
                 value = self.evaluate(value, environment)
                 distance = self.locals.get(expr)
