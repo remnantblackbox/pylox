@@ -33,7 +33,7 @@ Being a tree-walking interpreter, pylox builds a syntax tree from the source cod
 
 When you run a script or type some code in the REPL, the scanner (`lox/scanner.py`) reads the code and splits it into tokens: keywords, identifiers, numbers, strings, operators and so on. The parser (`lox/parser.py`) takes those tokens and builds the syntax tree with recursive descent. The tree nodes are in `lox/expr.py` for expressions and `lox/stmt.py` for statements.
 
-Before running anything, the resolver (`lox/resolver.py`) walks the tree once to figure out which declaration each variable refers to. This keeps closures bound to the variables they actually captured, because without it a variable declared later in the enclosing scope could change what a closure sees. The resolver also catches a couple of errors early, like declaring the same variable twice in the same scope or using `return` outside a function.
+Before running anything, the resolver (`lox/resolver.py`) walks the tree once to figure out which declaration each variable refers to and how many scopes away it is. Thanks to this, the interpreter can go straight to the right scope when it looks up a variable, and closures always see the variables they captured. The resolver also catches a couple of errors early, like declaring the same variable twice in the same scope or using `return` outside a function.
 
 Then the interpreter (`lox/interpreter.py`) walks the tree again and actually runs it, storing variables in the environments defined in `lox/environment.py`.
 
