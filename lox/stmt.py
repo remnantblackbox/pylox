@@ -26,12 +26,12 @@ class Print(Stmt):
 @dataclass
 class Return(Stmt):
     keyword: Token
-    value: Expr
+    value: Expr | None
 
 @dataclass
 class Var(Stmt):
     name: Token
-    initializer: Expr
+    initializer: Expr | None
 
 @dataclass
 class While(Stmt):
@@ -42,4 +42,4 @@ class While(Stmt):
 class If(Stmt):
     condition: Expr
     then_branch: Stmt
-    else_branch: Stmt
+    else_branch: Stmt | None

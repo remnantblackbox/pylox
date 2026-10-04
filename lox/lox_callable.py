@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 from stmt import Function
 from expr import Lambda
 from environment import Environment
@@ -7,11 +8,11 @@ import time
 
 class LoxCallable(ABC):
     @abstractmethod
-    def call(self, interpreter, arguments):
+    def call(self, interpreter, arguments) -> Any:
         pass
 
     @abstractmethod
-    def arity(self):
+    def arity(self) -> int:
         pass
 
 class LoxFunction(LoxCallable):
@@ -19,7 +20,7 @@ class LoxFunction(LoxCallable):
         self.declaration = declaration
         self.closure = closure
 
-    def call(self, interpreter, arguments):
+    def call(self, interpreter, arguments: list[Any]) -> Any:
         environment = Environment(self.closure)
         for i in range(len(self.declaration.params)):
             environment.define(self.declaration.params[i].lexeme, arguments[i])
@@ -28,7 +29,7 @@ class LoxFunction(LoxCallable):
         except ReturnException as e:
             return e.value
 
-    def arity(self):
+    def arity(self) -> int:
         return len(self.declaration.params)
 
     def __repr__(self):
@@ -38,10 +39,10 @@ class LoxFunction(LoxCallable):
 
 # native functions
 class Clock(LoxCallable):
-    def call(self, interpreter, arguments):
+    def call(self, interpreter, arguments) -> Any:
         return time.time()
 
-    def arity(self):
+    def arity(self) -> int:
         return 0
 
     def __repr__(self):

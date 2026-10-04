@@ -1,7 +1,7 @@
 from token_ import Token
 from token_type import TokenType
-from expr import Binary, Unary, Literal, Grouping, Variable, Assign, Logical, Call, Lambda
-from stmt import Print, Expression, Var, Block, If, While, Function, Return
+from expr import Expr, Binary, Unary, Literal, Grouping, Variable, Assign, Logical, Call, Lambda
+from stmt import Stmt, Print, Expression, Var, Block, If, While, Function, Return
 import error
 
 class ParseError(Exception):
@@ -12,16 +12,16 @@ class Parser:
         self.tokens = tokens
         self.current = 0
 
-    def parse(self):
+    def parse(self) -> list[Stmt]:
         statements = []
         while not self.is_at_end():
             statements.append(self.declaration())
         return statements
 
-    def expression(self):
+    def expression(self) -> Expr:
         return self.assignment()
 
-    def declaration(self):
+    def declaration(self) -> Stmt | None:
         try:
             if self.check(TokenType.FUN):
                 if self.check_next(TokenType.IDENTIFIER):
@@ -35,7 +35,7 @@ class Parser:
         except ParseError as e:
             self.synchronize()
 
-    def statement(self):
+    def statement(self) -> Stmt:
         if self.match(TokenType.FOR):
             return self.for_statement()
 
@@ -56,7 +56,7 @@ class Parser:
         
         return self.expression_statement()
 
-    def for_statement(self):
+    def for_statement(self) -> Stmt:
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
 
         if self.match(TokenType.SEMICOLON):
@@ -89,7 +89,7 @@ class Parser:
 
         return body
         
-    def if_statement(self):
+    def if_statement(self) -> If:
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
         condition = self.expression()
         self.consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
@@ -100,12 +100,12 @@ class Parser:
             else_branch = self.statement()
         return If(condition, then_branch, else_branch)
 
-    def print_statement(self):
+    def print_statement(self) -> Print:
         value = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return Print(value)
 
-    def return_statement(self):
+    def return_statement(self) -> Return:
         keyword = self.previous()
         value = None
         if not self.check(TokenType.SEMICOLON):
@@ -114,7 +114,7 @@ class Parser:
         self.consume(TokenType.SEMICOLON, "Expect ';' after return value.")
         return Return(keyword, value)
 
-    def var_declaration(self):
+    def var_declaration(self) -> Var:
         name = self.consume(TokenType.IDENTIFIER, "Expect variable name.")
         initializer = None
         if self.match(TokenType.EQUAL):
@@ -122,24 +122,24 @@ class Parser:
         self.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
         return Var(name, initializer)
 
-    def while_statement(self):
+    def while_statement(self) -> While:
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
         condition = self.expression()
         self.consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
         body = self.statement()
         return While(condition, body)
 
-    def expression_statement(self):
+    def expression_statement(self) -> Expression:
         expr = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
         return Expression(expr)
 
-    def function(self, kind: str):
+    def function(self, kind: str) -> Function:
         name = self.consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
         parameters, body = self.function_body(kind)
         return Function(name, parameters, body)
 
-    def function_body(self, kind):
+    def function_body(self, kind) -> tuple[list[Token], list[Stmt]]:
         self.consume(TokenType.LEFT_PAREN, "Expect '(' before parameters.")
         parameters = []
         if not self.check(TokenType.RIGHT_PAREN):
@@ -154,14 +154,14 @@ class Parser:
         body = self.block()
         return parameters, body
 
-    def block(self):
+    def block(self) -> list[Stmt]:
         statements = []
         while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
             statements.append(self.declaration())
         self.consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
         return statements
 
-    def assignment(self):
+    def assignment(self) -> Expr:
         expr = self.logic_or()
         if self.match(TokenType.EQUAL):
             equals = self.previous()
@@ -173,7 +173,7 @@ class Parser:
             self.error(equals, "Invalid assignment target.")
         return expr
 
-    def logic_or(self):
+    def logic_or(self) -> Expr:
         expr = self.logic_and()
 
         while self.match(TokenType.OR):
@@ -183,7 +183,7 @@ class Parser:
 
         return expr
 
-    def logic_and(self):
+    def logic_and(self) -> Expr:
         expr = self.equality()
 
         while self.match(TokenType.AND):
@@ -193,7 +193,7 @@ class Parser:
 
         return expr
 
-    def equality(self):
+    def equality(self) -> Expr:
         expr = self.comparison()
 
         while self.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL):
@@ -203,7 +203,7 @@ class Parser:
 
         return expr
 
-    def comparison(self):
+    def comparison(self) -> Expr:
         expr = self.term()
 
         while self.match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL):
@@ -213,7 +213,7 @@ class Parser:
 
         return expr
 
-    def term(self):
+    def term(self) -> Expr:
         expr = self.factor()
 
         while self.match(TokenType.MINUS, TokenType.PLUS):
@@ -223,7 +223,7 @@ class Parser:
 
         return expr
 
-    def factor(self):
+    def factor(self) -> Expr:
         expr = self.unary()
 
         while self.match(TokenType.SLASH, TokenType.STAR):
@@ -233,7 +233,7 @@ class Parser:
 
         return expr
 
-    def unary(self):
+    def unary(self) -> Expr:
         if self.match(TokenType.BANG, TokenType.MINUS):
             operator = self.previous()
             right = self.unary()
@@ -241,7 +241,7 @@ class Parser:
 
         return self.call()
 
-    def finish_call(self, callee):
+    def finish_call(self, callee: Expr) -> Call:
         arguments = []
         if not self.check(TokenType.RIGHT_PAREN):
             arguments.append(self.expression())
@@ -253,7 +253,7 @@ class Parser:
         paren = self.consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.")
         return Call(callee, paren, arguments)
 
-    def call(self):
+    def call(self) -> Expr:
         expr = self.primary()
 
         while True:
@@ -264,7 +264,7 @@ class Parser:
 
         return expr
 
-    def primary(self):
+    def primary(self) -> Expr:
         if self.match(TokenType.FALSE):
             return Literal(False)
         if self.match(TokenType.TRUE):
@@ -289,48 +289,48 @@ class Parser:
 
         raise self.error(self.peek(), "Expect expression.")
 
-    def match(self, *types: TokenType):
+    def match(self, *types: TokenType) -> bool:
         for type in types:
             if self.check(type):
                 self.advance()
                 return True
         return False
 
-    def consume(self, type: TokenType, message: str):
+    def consume(self, type: TokenType, message: str) -> Token:
         if self.check(type):
             return self.advance()
 
         raise self.error(self.peek(), message)
 
-    def check(self, token_type: TokenType):
+    def check(self, token_type: TokenType) -> bool:
         if self.is_at_end():
             return False
         return self.peek().type == token_type
 
-    def advance(self):
+    def advance(self) -> Token:
         if not self.is_at_end():
             self.current += 1
         return self.previous()
 
-    def is_at_end(self):
+    def is_at_end(self) -> bool:
         return self.peek().type == TokenType.EOF
 
-    def peek(self):
+    def peek(self) -> Token:
         return self.tokens[self.current]
 
-    def check_next(self, token_type):
+    def check_next(self, token_type) -> bool:
         if self.is_at_end():
             return False
         return self.tokens[self.current + 1].type == token_type
 
-    def previous(self):
+    def previous(self) -> Token:
         return self.tokens[self.current - 1]
 
-    def error(self, token: Token, message):
+    def error(self, token: Token, message) -> ParseError:
         error.parse_error(token, message)
         return ParseError()
 
-    def synchronize(self):
+    def synchronize(self) -> None:
         self.advance()
 
         while not self.is_at_end():

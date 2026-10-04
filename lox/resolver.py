@@ -1,5 +1,6 @@
-from stmt import Block, Var, Function, Expression, If, Print, Return, While
-from expr import Variable, Assign, Binary, Call, Grouping, Lambda, Logical, Unary
+from stmt import Stmt, Block, Var, Function, Expression, If, Print, Return, While
+from expr import Expr, Variable, Assign, Binary, Call, Grouping, Lambda, Logical, Unary
+from token_ import Token
 from error import parse_error
 from enum import Enum, auto
 
@@ -13,11 +14,11 @@ class Resolver:
         self.scopes: list[dict[str, bool]] = []
         self.current_function = FunctionType.NONE
 
-    def resolve(self, statements):
+    def resolve(self, statements: list[Stmt]) -> None:
         for statement in statements:
             self.resolve_stmt(statement)
 
-    def resolve_function(self, function, function_type):
+    def resolve_function(self, function: Function | Lambda, function_type) -> None:
         enclosing_function = self.current_function
         self.current_function = function_type
         self.begin_scope()
@@ -28,13 +29,13 @@ class Resolver:
         self.end_scope()
         self.current_function = enclosing_function
 
-    def begin_scope(self):
+    def begin_scope(self) -> None:
         self.scopes.append({})
 
-    def end_scope(self):
+    def end_scope(self) -> None:
         self.scopes.pop()
 
-    def declare(self, name):
+    def declare(self, name: Token) -> None:
         if not self.scopes:
             return
         scope = self.scopes[-1]
@@ -42,18 +43,18 @@ class Resolver:
             parse_error(name, "Already a variable with this name in this scope.")
         scope[name.lexeme] = False
 
-    def define(self, name):
+    def define(self, name: Token) -> None:
         if not self.scopes:
             return
         self.scopes[-1][name.lexeme] = True
 
-    def resolve_local(self, expr, name):
+    def resolve_local(self, expr, name: Token) -> None:
         for distance, scope in enumerate(reversed(self.scopes)):
             if name.lexeme in scope:
                 self.interpreter.resolve(expr, distance)
                 return
 
-    def resolve_stmt(self, stmt):
+    def resolve_stmt(self, stmt) -> None:
         match stmt:
             case Block(statements):
                 self.begin_scope()
@@ -86,7 +87,7 @@ class Resolver:
                 self.resolve_expr(condition)
                 self.resolve_stmt(body)
 
-    def resolve_expr(self, expr):
+    def resolve_expr(self, expr) -> None:
         match expr:
             case Variable(name):
                 if self.scopes and self.scopes[-1].get(name.lexeme) is False:

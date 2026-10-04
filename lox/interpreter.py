@@ -1,27 +1,28 @@
-from expr import Literal, Grouping, Unary, Binary, Variable, Assign, Logical, Call, Lambda
+from expr import Expr, Literal, Grouping, Unary, Binary, Variable, Assign, Logical, Call, Lambda
 from stmt import Stmt, Expression, Print, Var, Block, If, While, Function, Return
 from environment import Environment
 from lox_callable import LoxCallable, Clock, LoxFunction
+from token_ import Token
 from token_type import TokenType
 from runtime_error import LoxRuntimeError
 from return_exc import ReturnException
+from typing import Any
 import error
-import math
 
 class Interpreter:
     def __init__(self):
         self.globals = Environment()
         self.globals.define("clock", Clock())
-        self.locals = {}
+        self.locals: dict[Expr, int] = {}
 
-    def interpret(self, statements: list[Stmt]):
+    def interpret(self, statements: list[Stmt]) -> None:
         try:
             for stmt in statements:
                 self.execute(stmt, self.globals)
         except LoxRuntimeError as e:
-            error.runtime_error(e)    
+            error.runtime_error(e)
 
-    def evaluate(self, expr, environment):
+    def evaluate(self, expr, environment) -> Any:
         match expr:
             case Literal(value):
                 return value
@@ -104,7 +105,7 @@ class Interpreter:
                     raise LoxRuntimeError(paren, f"Expected {callee.arity()} arguments but got {len(arguments)}.")
                 return callee.call(self, arguments)
 
-    def execute(self, stmt, environment):
+    def execute(self, stmt, environment) -> None:
         match stmt:
             case Expression(expression):
                 self.evaluate(expression, environment)
@@ -136,28 +137,28 @@ class Interpreter:
                 block_env = Environment(environment)
                 self.execute_block(statements, block_env)
 
-    def resolve(self, expr, depth):
+    def resolve(self, expr, depth) -> None:
         self.locals[expr] = depth
 
-    def look_up_variable(self, name, expr, environment):
+    def look_up_variable(self, name: Token, expr: Expr, environment) -> Any:
         distance = self.locals.get(expr)
         if distance is not None:
             return environment.get_at(distance, name.lexeme)
         else:
             return self.globals.get(name)
 
-    def execute_block(self, statements, environment):
+    def execute_block(self, statements: list[Stmt], environment) -> None:
         for statement in statements:
             self.execute(statement, environment)
 
-    def is_truthy(self, obj):
+    def is_truthy(self, obj) -> bool:
         if obj is None:
             return False
         if isinstance(obj, bool):
             return obj
         return True
 
-    def stringify(self, value):
+    def stringify(self, value) -> str:
         if value is None:
             return "nil"
         
@@ -172,12 +173,12 @@ class Interpreter:
         
         return str(value)
 
-    def check_number_operand(self, operator, operand):
+    def check_number_operand(self, operator, operand) -> None:
         if isinstance(operand, float):
             return
         raise LoxRuntimeError(operator, "Operand must be a number.")
 
-    def check_number_operands(self, operator, left, right):
+    def check_number_operands(self, operator, left, right) -> None:
         if isinstance(left, float) and isinstance(right, float):
             return
         raise LoxRuntimeError(operator, "Operands must be numbers.")

@@ -1,7 +1,7 @@
 from expr import Expr, Binary, Grouping, Literal, Unary
 
 class AstPrinter:
-    def print(self, expr: Expr):
+    def print(self, expr: Expr) -> str:
         match expr:
             case Binary(left, operator, right):
                 return self.parenthesize(operator.lexeme, left, right)
@@ -14,6 +14,6 @@ class AstPrinter:
             case Unary(operator, right):
                 return self.parenthesize(operator.lexeme, right)
         
-    def parenthesize(self, name: str, *exprs: Expr):
+    def parenthesize(self, name: str, *exprs: Expr) -> str:
         output = [self.print(expr) for expr in exprs]
         return f"({name} {' '.join(output)})"

@@ -24,12 +24,12 @@ KEYWORDS = {
 class Scanner:
     def __init__(self, src: str):
         self.src = src
-        self.tokens = []
+        self.tokens: list[Token] = []
         self.start = 0
         self.current = 0
         self.line = 1
 
-    def scan_tokens(self):
+    def scan_tokens(self) -> list[Token]:
         while not self.is_at_end():
             self.start = self.current
             self.scan_token()
@@ -37,7 +37,7 @@ class Scanner:
         self.tokens.append(Token(TokenType.EOF, "", None, self.line))
         return self.tokens
 
-    def scan_token(self):
+    def scan_token(self) -> None:
         c = self.advance()
         match c:
             case '(':
@@ -88,14 +88,14 @@ class Scanner:
                 else:
                     error.error(self.line, "Unexpected character.")
 
-    def identifier(self):
+    def identifier(self) -> None:
         while self.is_alpha_numeric(self.peek()):
             self.advance()
         text = self.src[self.start:self.current]
         type = KEYWORDS.get(text, TokenType.IDENTIFIER)
         self.add_token(type)
 
-    def number(self):
+    def number(self) -> None:
         while self.is_digit(self.peek()):
             self.advance()
 
@@ -108,7 +108,7 @@ class Scanner:
 
         self.add_token(TokenType.NUMBER, float(self.src[self.start:self.current]))
 
-    def string(self):
+    def string(self) -> None:
         while self.peek() != '"' and not self.is_at_end():
             if self.peek() == '\n':
                 self.line += 1
@@ -125,7 +125,7 @@ class Scanner:
         value = self.src[self.start+1:self.current-1]
         self.add_token(TokenType.STRING, value)
 
-    def match(self, expected: str):
+    def match(self, expected: str) -> bool:
         if self.is_at_end(): 
             return False
         if self.src[self.current] != expected: 
@@ -134,33 +134,33 @@ class Scanner:
         self.current += 1
         return True
 
-    def peek(self):
+    def peek(self) -> str:
         if self.is_at_end(): 
             return '\0'
         return self.src[self.current]
 
-    def peek_next(self):
+    def peek_next(self) -> str:
         if self.current + 1 >= len(self.src): 
             return '\0'
         return self.src[self.current+1]
 
-    def is_alpha(self, c):
+    def is_alpha(self, c) -> bool:
         return 'a' <= c <= 'z' or 'A' <= c <= 'Z' or c == '_'
 
-    def is_alpha_numeric(self, c):
+    def is_alpha_numeric(self, c) -> bool:
         return self.is_alpha(c) or self.is_digit(c)
 
-    def is_digit(self, c):
+    def is_digit(self, c) -> bool:
         return '0' <= c <= '9'
 
-    def is_at_end(self):
+    def is_at_end(self) -> bool:
         return self.current >= len(self.src)
 
-    def advance(self):
+    def advance(self) -> str:
         c = self.src[self.current]
         self.current += 1
         return c
 
-    def add_token(self, type: TokenType, literal=None):
+    def add_token(self, type: TokenType, literal=None) -> None:
         text = self.src[self.start:self.current]
         self.tokens.append(Token(type, text, literal, self.line))
