@@ -10,9 +10,31 @@ from typing import Any
 import error
 
 class Interpreter:
+    """Tree-walking interpreter: executes a resolved syntax tree.
+    
+    Lox values are represented directly by Python values:
+    
+        nil       None
+        Boolean   bool
+        number    float (every Lox number, including integers)
+        string    str
+        function  LoxCallable (LoxFunction or a native such as Clock)
+    
+    Variables live in a chain of Environment objects, one per scope.
+    Before execution, the Resolver stores in self.locals how many
+    scopes away each local variable use is. A variable use that is not
+    in self.locals is looked up by name in self.globals.
+    
+    The current environment is passed to evaluate() and execute() 
+    as a parameter instead of being stored in a field, 
+    so a block never has to restore the previous environment.
+    """
+    
     def __init__(self):
         self.globals = Environment()
         self.globals.define("clock", Clock())
+        # Scope distance for each local variable use, filled in by the Resolver
+        # before execution. An expression missing from this dict is a global one.
         self.locals: dict[Expr, int] = {}
 
     def interpret(self, statements: list[Stmt]) -> None:
@@ -23,6 +45,25 @@ class Interpreter:
             error.runtime_error(e)
 
     def evaluate(self, expr, environment) -> Any:
+        """Evaluate an expression in the given environment and return its Lox value.
+
+        Literal   the value itself
+        Logical   left operand first; the right one only if needed.
+                  Returns the operand's own value, not true/false.
+        Lambda    a new function closing over the environment
+        Grouping  the value of the inner expression
+        Unary     "-" requires a number; "!" negates truthiness
+        Variable  the variable's value, at its resolved distance or global
+        Assign    stores the value and returns it, so "a = b = 1" works
+        Binary    both operands, left to right, then the operator.
+                  Arithmetic and comparison require numbers; "+" also
+                  joins two strings; "==" never converts between types.
+        Call      callee, then arguments left to right. The callee must
+                  be callable and the argument count must match its arity.
+
+        Raises LoxRuntimeError when an operand or callee has the wrong type.
+        """
+
         match expr:
             case Literal(value):
                 return value
@@ -92,6 +133,7 @@ class Interpreter:
                         self.check_number_operands(operator, left, right)
                         return left * right
                     case TokenType.BANG_EQUAL:
+                        # Compare types first because in Python True == 1.0, but in Lox 1 == true is false.
                         return type(left) is not type(right) or left != right
                     case TokenType.EQUAL_EQUAL:
                         return type(left) is type(right) and left == right
@@ -106,6 +148,18 @@ class Interpreter:
                 return callee.call(self, arguments)
 
     def execute(self, stmt, environment) -> None:
+        """Execute a statement in the given environment.
+
+        Expression  evaluates and discards the value
+        Function    defines the name, capturing environment as closure
+        If          runs one branch, by the truthiness of the condition
+        Print       writes the value's printed form and a newline
+        Return      raises ReturnException to unwind to the function call
+        Var         defines the name; nil when there is no initializer
+        While       repeats the body while the condition is truthy
+        Block       runs the statements in a new nested environment
+        """
+
         match stmt:
             case Expression(expression):
                 self.evaluate(expression, environment)
@@ -141,6 +195,8 @@ class Interpreter:
         self.locals[expr] = depth
 
     def look_up_variable(self, name: Token, expr: Expr, environment) -> Any:
+        """Read a variable at its resolved distance, or from self.globals if unresolved."""
+
         distance = self.locals.get(expr)
         if distance is not None:
             return environment.get_at(distance, name.lexeme)
@@ -148,10 +204,15 @@ class Interpreter:
             return self.globals.get(name)
 
     def execute_block(self, statements: list[Stmt], environment) -> None:
+        """Run statements in an environment the caller has already created.
+
+        Used by blocks and by function calls, which need different parents.
+        """
         for statement in statements:
             self.execute(statement, environment)
 
     def is_truthy(self, obj) -> bool:
+        """Lox truthiness: nil and false are falsey, everything else is truthy."""
         if obj is None:
             return False
         if isinstance(obj, bool):
@@ -159,6 +220,7 @@ class Interpreter:
         return True
 
     def stringify(self, value) -> str:
+        """Format a Lox value for printing: nil, true/false, 3 instead of 3.0."""
         if value is None:
             return "nil"
         
