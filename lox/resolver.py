@@ -1,6 +1,6 @@
 from stmt import Block, Var, Function, Expression, If, Print, Return, While
 from expr import Variable, Assign, Binary, Call, Grouping, Lambda, Logical, Unary
-from error import error
+from error import parse_error
 from enum import Enum, auto
 
 class FunctionType(Enum):
@@ -39,7 +39,7 @@ class Resolver:
             return
         scope = self.scopes[-1]
         if name.lexeme in scope:
-            error(name, "Already a variable with this name in this scope.")
+            parse_error(name, "Already a variable with this name in this scope.")
         scope[name.lexeme] = False
 
     def define(self, name):
@@ -79,7 +79,7 @@ class Resolver:
                 self.resolve_expr(expression)
             case Return(keyword, value):
                 if self.current_function is FunctionType.NONE:
-                    error(keyword, "Can't return from top-level code.")
+                    parse_error(keyword, "Can't return from top-level code.")
                 if value is not None:
                     self.resolve_expr(value)
             case While(condition, body):
@@ -90,7 +90,7 @@ class Resolver:
         match expr:
             case Variable(name):
                 if self.scopes and self.scopes[-1].get(name.lexeme) is False:
-                    error(name, "Can't read local variable in its own initializer.")
+                    parse_error(name, "Can't read local variable in its own initializer.")
                 self.resolve_local(expr, name)
             case Assign(name, value):
                 self.resolve_expr(value)
