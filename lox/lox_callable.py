@@ -32,6 +32,8 @@ class LoxFunction(LoxCallable):
         return len(self.declaration.params)
 
     def __repr__(self):
+        if isinstance(self.declaration, Lambda):
+            return "<fn>"
         return f"<fn {self.declaration.name.lexeme}>"
 
 # native functions
