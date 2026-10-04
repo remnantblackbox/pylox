@@ -6,6 +6,7 @@ from token_type import TokenType
 from runtime_error import LoxRuntimeError
 from return_exc import ReturnException
 import error
+import math
 
 class Interpreter:
     def __init__(self):
@@ -83,6 +84,8 @@ class Interpreter:
                         raise LoxRuntimeError(operator, "Operands must be two numbers or two strings.")
                     case TokenType.SLASH:
                         self.check_number_operands(operator, left, right)
+                        if right == 0:
+                            raise LoxRuntimeError(operator, "Division by zero.")
                         return left / right
                     case TokenType.STAR:
                         self.check_number_operands(operator, left, right)
