@@ -16,7 +16,7 @@ def report(line: int, where: str, message: str):
 
 def parse_error(token: Token, message:str):
     if token.type == TokenType.EOF:
-        report(token.line, "at end", message)
+        report(token.line, " at end", message)
     else:
         report(token.line, f" at '{token.lexeme}'", message)
 
