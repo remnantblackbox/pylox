@@ -21,6 +21,8 @@ class LoxFunction(LoxCallable):
         self.closure = closure
 
     def call(self, interpreter, arguments: list[Any]) -> Any:
+        # Each call gets a fresh environment whose parent is the closure captured
+        # when the function was declared.
         environment = Environment(self.closure)
         for i in range(len(self.declaration.params)):
             environment.define(self.declaration.params[i].lexeme, arguments[i])
