@@ -3,7 +3,6 @@ from scanner import Scanner
 from parser import Parser
 from interpreter import Interpreter
 from resolver import Resolver
-from ast_printer import AstPrinter
 import error
 
 interpreter = Interpreter()
