@@ -4,6 +4,17 @@ from token_ import Token
 from runtime_error import LoxRuntimeError
 
 class Environment:
+    """Maps variable names to their values for one scope.
+
+    Each environment links to the one it was created inside, so a name not
+    found here is looked up in the enclosing scopes.
+
+    Variables are reached in two ways. Lookups by name search this scope,
+    then the enclosing ones, and raise if the name is undefined. Lookups
+    by distance (the *_at methods) go straight to the scope the Resolver
+    identified and assume the variable is there.
+    """
+    
     def __init__(self, enclosing=None):
         self.values: dict[str, Any] = {}
         self.enclosing: Environment | None = enclosing
