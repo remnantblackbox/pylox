@@ -8,21 +8,79 @@ class ParseError(Exception):
     pass
 
 class Parser:
+    """Recursive descent parser: turns a list of tokens into a syntax tree.
+
+    Each grammar rule below is parsed by the method of the same name.
+    Rules are listed from lowest to highest precedence.
+
+    Notation: "x" is a literal token, UPPERCASE is a token type,
+    | is a choice, ( ) groups, * means zero or more, ? means optional.
+
+    Statements:
+
+        program              -> declaration* EOF ;
+        declaration          -> "fun" function | var_declaration | statement ;
+        function             -> IDENTIFIER function_body ;
+        function_body        -> "(" parameters? ")" block ;
+        parameters           -> IDENTIFIER ( "," IDENTIFIER )* ;
+        var_declaration      -> "var" IDENTIFIER ( "=" expression )? ";" ;
+        statement            -> for_statement | if_statement | print_statement
+                             | return_statement | while_statement | block
+                             | expression_statement ;
+        for_statement        -> "for" "(" ( var_declaration | expression_statement | ";" )
+                               expression? ";" expression? ")" statement ;
+        if_statement         -> "if" "(" expression ")" statement ( "else" statement )? ;
+        print_statement      -> "print" expression ";" ;
+        return_statement     -> "return" expression? ";" ;
+        while_statement      -> "while" "(" expression ")" statement ;
+        block                -> "{" declaration* "}" ;
+        expression_statement -> expression ";" ;
+
+    Expressions:
+
+        expression -> assignment ;
+        assignment -> IDENTIFIER "=" assignment | logic_or ;
+        logic_or   -> logic_and ( "or" logic_and )* ;
+        logic_and  -> equality ( "and" equality )* ;
+        equality   -> comparison ( ( "!=" | "==" ) comparison )* ;
+        comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+        term       -> factor ( ( "-" | "+" ) factor )* ;
+        factor     -> unary ( ( "/" | "*" ) unary )* ;
+        unary      -> ( "!" | "-" ) unary | call ;
+        call       -> primary ( "(" arguments? ")" )* ;
+        arguments  -> expression ( "," expression )* ;
+        primary    -> "true" | "false" | "nil" | NUMBER | STRING | IDENTIFIER
+                   | "(" expression ")" | "fun" function_body ;
+
+    '"fun" function_body' in primary is an anonymous function.
+    """
+
     def __init__(self, tokens: list[Token]):
         self.tokens = tokens
         self.current = 0
 
     def parse(self) -> list[Stmt]:
+        """program -> declaration* EOF ;"""
+
         statements = []
         while not self.is_at_end():
             statements.append(self.declaration())
         return statements
 
     def expression(self) -> Expr:
+        """expression -> assignment ;"""
+
         return self.assignment()
 
     def declaration(self) -> Stmt | None:
+        """declaration -> "fun" function | var_declaration | statement ;
+        
+        Returns None after a syntax error, once the parser has resynchronized.
+        """
+
         try:
+            # 'fun' starts a declaration only when a name follows it. 'fun (' is an
+            # anonymous function, which is an expression, so it goes to statement().
             if self.check(TokenType.FUN):
                 if self.check_next(TokenType.IDENTIFIER):
                     self.advance()
@@ -32,10 +90,16 @@ class Parser:
             if self.match(TokenType.VAR):
                 return self.var_declaration()
             return self.statement()
-        except ParseError as e:
+        except ParseError:
+            # Skip to the next statement boundary so one syntax error does not
+            # produce a cascade of errors.
             self.synchronize()
 
     def statement(self) -> Stmt:
+        """statement -> for_statement | if_statement | print_statement
+                     | return_statement | while_statement | block
+                     | expression_statement ;"""
+        
         if self.match(TokenType.FOR):
             return self.for_statement()
 
@@ -57,6 +121,13 @@ class Parser:
         return self.expression_statement()
 
     def for_statement(self) -> Stmt:
+        """for_statement -> "for" "(" ( var_declaration | expression_statement | ";" )
+        expression? ";" expression? ")" statement ;
+
+        Produces no For node. The loop is rewritten as
+        { initializer; while (condition) { body; increment; } }.
+        """
+
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
 
         if self.match(TokenType.SEMICOLON):
@@ -90,6 +161,8 @@ class Parser:
         return body
         
     def if_statement(self) -> If:
+        """if_statement -> "if" "(" expression ")" statement ( "else" statement )? ;"""
+
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
         condition = self.expression()
         self.consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
@@ -101,11 +174,15 @@ class Parser:
         return If(condition, then_branch, else_branch)
 
     def print_statement(self) -> Print:
+        """print_statement -> "print" expression ";" ;"""
+
         value = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return Print(value)
 
     def return_statement(self) -> Return:
+        """return_statement -> "return" expression? ";" ;"""
+
         keyword = self.previous()
         value = None
         if not self.check(TokenType.SEMICOLON):
@@ -115,6 +192,8 @@ class Parser:
         return Return(keyword, value)
 
     def var_declaration(self) -> Var:
+        """var_declaration -> "var" IDENTIFIER ( "=" expression )? ";" ;"""
+
         name = self.consume(TokenType.IDENTIFIER, "Expect variable name.")
         initializer = None
         if self.match(TokenType.EQUAL):
@@ -123,6 +202,8 @@ class Parser:
         return Var(name, initializer)
 
     def while_statement(self) -> While:
+        """while_statement -> "while" "(" expression ")" statement ;"""
+
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
         condition = self.expression()
         self.consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
@@ -130,16 +211,27 @@ class Parser:
         return While(condition, body)
 
     def expression_statement(self) -> Expression:
+        """expression_statement -> expression ";" ;"""
+
         expr = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
         return Expression(expr)
 
     def function(self, kind: str) -> Function:
+        """function -> IDENTIFIER function_body ;
+        
+        'kind' is only used in error messages ("function", "method").
+        """
         name = self.consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
         parameters, body = self.function_body(kind)
         return Function(name, parameters, body)
 
     def function_body(self, kind) -> tuple[list[Token], list[Stmt]]:
+        """function_body -> "(" parameters? ")" block ;
+        
+        Shared by named functions and anonymous functions.
+        """
+
         self.consume(TokenType.LEFT_PAREN, "Expect '(' before parameters.")
         parameters = []
         if not self.check(TokenType.RIGHT_PAREN):
@@ -155,6 +247,8 @@ class Parser:
         return parameters, body
 
     def block(self) -> list[Stmt]:
+        """block -> "{" declaration* "}" ;"""
+
         statements = []
         while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
             statements.append(self.declaration())
@@ -162,6 +256,11 @@ class Parser:
         return statements
 
     def assignment(self) -> Expr:
+        """assignment -> IDENTIFIER "=" assignment | logic_or ;
+
+        The left side is parsed as an expression first, then checked to be
+        a valid assignment target.
+        """
         expr = self.logic_or()
         if self.match(TokenType.EQUAL):
             equals = self.previous()
@@ -174,6 +273,8 @@ class Parser:
         return expr
 
     def logic_or(self) -> Expr:
+        """logic_or -> logic_and ( "or" logic_and )* ;"""
+
         expr = self.logic_and()
 
         while self.match(TokenType.OR):
@@ -184,6 +285,8 @@ class Parser:
         return expr
 
     def logic_and(self) -> Expr:
+        """logic_and -> equality ( "and" equality )* ;"""
+
         expr = self.equality()
 
         while self.match(TokenType.AND):
@@ -194,6 +297,8 @@ class Parser:
         return expr
 
     def equality(self) -> Expr:
+        """equality -> comparison ( ( "!=" | "==" ) comparison )* ;"""
+
         expr = self.comparison()
 
         while self.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL):
@@ -204,6 +309,8 @@ class Parser:
         return expr
 
     def comparison(self) -> Expr:
+        """comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;"""
+
         expr = self.term()
 
         while self.match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL):
@@ -214,6 +321,8 @@ class Parser:
         return expr
 
     def term(self) -> Expr:
+        """term -> factor ( ( "-" | "+" ) factor )* ;"""
+
         expr = self.factor()
 
         while self.match(TokenType.MINUS, TokenType.PLUS):
@@ -224,6 +333,8 @@ class Parser:
         return expr
 
     def factor(self) -> Expr:
+        """factor -> unary ( ( "/" | "*" ) unary )* ;"""
+
         expr = self.unary()
 
         while self.match(TokenType.SLASH, TokenType.STAR):
@@ -234,6 +345,8 @@ class Parser:
         return expr
 
     def unary(self) -> Expr:
+        """unary -> ( "!" | "-" ) unary | call ;"""
+
         if self.match(TokenType.BANG, TokenType.MINUS):
             operator = self.previous()
             right = self.unary()
@@ -242,6 +355,10 @@ class Parser:
         return self.call()
 
     def finish_call(self, callee: Expr) -> Call:
+        """arguments -> expression ( "," expression )* ;
+
+        Called after the opening parenthesis; also consumes the closing one.
+        """
         arguments = []
         if not self.check(TokenType.RIGHT_PAREN):
             arguments.append(self.expression())
@@ -254,6 +371,8 @@ class Parser:
         return Call(callee, paren, arguments)
 
     def call(self) -> Expr:
+        """call -> primary ( "(" arguments? ")" )* ;"""
+
         expr = self.primary()
 
         while True:
@@ -265,6 +384,9 @@ class Parser:
         return expr
 
     def primary(self) -> Expr:
+        """primary -> "true" | "false" | "nil" | NUMBER | STRING | IDENTIFIER
+                   | "(" expression ")" | "fun" function_body ;"""
+        
         if self.match(TokenType.FALSE):
             return Literal(False)
         if self.match(TokenType.TRUE):
@@ -327,6 +449,10 @@ class Parser:
         return self.tokens[self.current - 1]
 
     def error(self, token: Token, message) -> ParseError:
+        """Report a syntax error and return the exception without raising it.
+        The caller raises it when the parser must resynchronize, and ignores it
+        when parsing can simply continue."""
+
         error.parse_error(token, message)
         return ParseError()
 
