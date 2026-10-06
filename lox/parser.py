@@ -397,7 +397,8 @@ class Parser:
         if self.match(TokenType.IDENTIFIER):
             return Variable(self.previous())
 
-        if self.match(TokenType.FUN):
+        if self.check(TokenType.FUN) and self.check_next(TokenType.LEFT_PAREN):
+            self.advance()
             parameters, body = self.function_body("function")
             return Lambda(parameters, body)
         
